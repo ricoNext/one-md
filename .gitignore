@@ -126,6 +126,7 @@ dist
 .vscode-test
 
 # yarn v3
+.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -137,3 +138,11 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Next.js / Vercel (Create Next App)
+/build
+.vercel
+next-env.d.ts
+.DS_Store
+*.pem
+.pnpm-debug.log*
