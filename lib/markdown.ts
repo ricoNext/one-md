@@ -93,11 +93,21 @@ const LANG_DISPLAY: Record<string, string> = {
 const MONO_FONT = theme.pre["font-family"];
 const CODE_BG = "#282c34";
 
-/** 将单个 token 转为 <font color="#hex"> 标签（微信安全） */
-function tokenToFont(token: ThemedToken): string {
+const CODE_DEFAULT_COLOR = "#abb2bf";
+
+/**
+ * 将 token 转为 <span style="color:..."> 或裸文本。
+ *
+ * 采用 mdnice 方案：着色 token 用 <span style="color:...">, 默认色 token 不包裹
+ * （<code> 已设 color 继承）。避免使用已废弃的 <font> 标签。
+ */
+function tokenToSpan(token: ThemedToken): string {
   const escaped = escapeHtmlForCode(token.content);
-  const color = token.color ?? "#abb2bf";
-  return `<font color="${color}">${escaped}</font>`;
+  const color = token.color ?? CODE_DEFAULT_COLOR;
+  if (color.toLowerCase() === CODE_DEFAULT_COLOR) {
+    return escaped;
+  }
+  return `<span style="${styleToString({ color, "line-height": "26px" })}">${escaped}</span>`;
 }
 
 /** HTML 转义 + 空格保护（微信会折叠 <pre> 内空格，用 &nbsp; 兜底） */
@@ -112,20 +122,13 @@ function escapeHtmlForCode(str: string): string {
 }
 
 /**
- * <pre><code> 结构的代码高亮。
+ * <pre><code> 结构的代码高亮（mdnice 方案）。
  *
- * 结构：
- *   <section>                          外层容器，圆角
- *     <section>LangName</section>      语言标签头
- *     <pre overflow-x:auto>            代码体，项目预览可横滑
- *       <code>
- *         <font color>token</font>\n   用 \n 换行，空格用 &nbsp;
- *       </code>
- *     </pre>
- *   </section>
+ * token 直接放在 <code> 内，不再用行级 <span> 包裹，行间以 <br> 分隔。
+ * 片段之间不能写字面 \n —— <pre> 会保留标签间换行文本节点，与 <br> 叠在一起会行距异常。
  *
- * 注意：微信会剥离 overflow-x，长行在微信中会溢出或折行。
- * 项目预览中可横向滚动查看完整代码。
+ * 横向滚动由 <code> 的 overflow-x:auto + display:-webkit-box 实现，
+ * 语言条 header 保持固定宽度不参与滚动。
  */
 function buildWeChatCodeHtml(
   hl: Highlighter,
@@ -142,29 +145,45 @@ function buildWeChatCodeHtml(
     tokens = hl.codeToTokens(code, { lang: "text", theme: CODE_THEME }).tokens;
   }
 
+  // Shiki 会为末尾换行符生成一个空行，去掉以避免多余空行
+  if (tokens.length > 1 && tokens.at(-1)?.length === 0) {
+    tokens.pop();
+  }
+
   const linesHtml = tokens
-    .map((lineTokens) => lineTokens.map(tokenToFont).join(""))
-    .join("\n");
+    .map((lineTokens) => {
+      const line = lineTokens.map(tokenToSpan).join("");
+      return line.length === 0 ? "&nbsp;" : line;
+    })
+    .join("<br>");
+
+  const displayLang = LANG_DISPLAY[lang.toLowerCase()] ?? lang.toUpperCase();
 
   const preStyle = styleToString({
     "background-color": CODE_BG,
-    color: "#abb2bf",
-    padding: "16px",
     margin: "0",
-    "font-size": "13px",
-    "line-height": "1.65",
-    "font-family": MONO_FONT,
-    "overflow-x": "auto",
+    padding: "0",
+    ...(displayLang
+      ? { "border-radius": "0 0 8px 8px" }
+      : { "border-radius": "8px" }),
   });
 
   const codeStyle = styleToString({
+    overflow: "auto",
+    padding: "16px",
+    color: CODE_DEFAULT_COLOR,
+    "background-color": CODE_BG,
+    "border-radius": displayLang ? "0 0 8px 8px" : "8px",
+    display: "-webkit-box",
+    "white-space": "nowrap",
+    "word-break": "normal",
     "font-family": MONO_FONT,
     "font-size": "13px",
+    "line-height": "26px",
   });
 
   const bodyHtml = `<pre style="${preStyle}"><code style="${codeStyle}">${linesHtml}</code></pre>`;
 
-  const displayLang = LANG_DISPLAY[lang.toLowerCase()] ?? lang.toUpperCase();
   const headerStyle = styleToString({
     padding: "8px 16px",
     "font-size": "12px",
@@ -174,6 +193,7 @@ function buildWeChatCodeHtml(
     "border-bottom": "1px solid #3e4451",
     "font-family": MONO_FONT,
     "letter-spacing": "0.5px",
+    ...(displayLang ? { "border-radius": "8px 8px 0 0" } : {}),
   });
   const headerHtml = displayLang
     ? `<section style="${headerStyle}">${displayLang}</section>`
@@ -182,8 +202,9 @@ function buildWeChatCodeHtml(
   const containerStyle = styleToString({
     "margin-top": "0",
     "margin-bottom": "16px",
+    "max-width": "100%",
+    "background-color": CODE_BG,
     "border-radius": "8px",
-    overflow: "hidden",
   });
 
   return `<section style="${containerStyle}">${headerHtml}${bodyHtml}</section>`;

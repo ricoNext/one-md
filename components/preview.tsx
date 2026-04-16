@@ -26,15 +26,15 @@ export default function Preview({ html }: PreviewProps) {
     }
     // Shadow DOM 内部不继承外部样式，只有 inline style 生效
     shadowRef.current.innerHTML = `
-      <div style="max-width:680px;margin:0 auto;padding:32px;font-family:-apple-system,'Helvetica Neue',Arial,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;color:#333333;line-height:1.75;font-size:15px;word-break:break-word;">
+      <div style="box-sizing:border-box;width:100%;max-width:680px;min-width:0;margin:0 auto;padding:32px;font-family:-apple-system,'Helvetica Neue',Arial,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;color:#333333;line-height:1.75;font-size:15px;word-break:break-word;">
         ${html}
       </div>
     `;
   }, [html]);
 
   return (
-    <div className="flex-1 overflow-auto bg-white">
-      <div id="preview-content" ref={hostRef} />
+    <div className="min-w-0 flex-1 overflow-auto bg-white">
+      <div className="w-full min-w-0" id="preview-content" ref={hostRef} />
     </div>
   );
 }

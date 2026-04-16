@@ -289,6 +289,6 @@ export const theme: Record<string, StyleMap> = {
 /** 将 StyleMap 对象转为 inline style 字符串 */
 export function styleToString(styles: StyleMap): string {
   return Object.entries(styles)
-    .map(([k, v]) => `${k}:${v}`)
+    .map(([k, v]) => `${k}:${v.replace(/"/g, "'")}`)
     .join(";");
 }

@@ -108,11 +108,11 @@ export default function MdEditor() {
         <div className="w-1/2">
           <Editor onChange={setMarkdown} value={markdown} />
         </div>
-        <div className="flex w-1/2 flex-col">
+        <div className="flex w-1/2 min-w-0 flex-col">
           <div className="border-gray-100 border-b bg-gray-50 px-4 py-2">
             <span className="font-medium text-gray-500 text-xs">预览</span>
           </div>
-          <div className="flex-1 overflow-auto">
+          <div className="min-w-0 flex-1 overflow-auto">
             <Preview html={html} />
           </div>
         </div>
