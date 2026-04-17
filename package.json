@@ -10,7 +10,7 @@
     "format": "biome format --write",
     "check": "ultracite check",
     "fix": "ultracite fix",
-    "prepare": "lefthook install"
+    "prepare": "node -e \"if (!process.env.CI && !process.env.VERCEL) { require('child_process').execSync('npx --no-install lefthook install', { stdio: 'inherit' }); }\""
   },
   "dependencies": {
     "next": "16.2.3",
