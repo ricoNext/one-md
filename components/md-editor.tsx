@@ -5,7 +5,7 @@ import Editor from "./editor";
 import Preview from "./preview";
 import Toolbar from "./toolbar";
 
-const DEFAULT_CONTENT = `# 欢迎使用 MD to WeChat
+const DEFAULT_CONTENT = `# 欢迎使用 One MD
 
 这是一个 **Markdown 渲染器**，支持将渲染效果一键复制到微信公众号编辑器。
 
@@ -78,10 +78,32 @@ console.log(greet("World"));
 *复制前请先点击右上角「复制到微信」按钮。*
 `;
 
+const STORAGE_KEY = "md-editor-content";
+
+function getInitialContent(): string {
+  if (typeof window === "undefined") {
+    return DEFAULT_CONTENT;
+  }
+  try {
+    const cached = localStorage.getItem(STORAGE_KEY);
+    return cached ?? DEFAULT_CONTENT;
+  } catch {
+    return DEFAULT_CONTENT;
+  }
+}
+
 export default function MdEditor() {
-  const [markdown, setMarkdown] = useState(DEFAULT_CONTENT);
+  const [markdown, setMarkdown] = useState(getInitialContent);
   const [html, setHtml] = useState("");
   const renderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, markdown);
+    } catch {
+      // ignore storage error
+    }
+  }, [markdown]);
 
   useEffect(() => {
     if (renderTimerRef.current) {

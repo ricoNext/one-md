@@ -59,9 +59,45 @@ function handleElement(
     handleListItem(node);
     return;
   }
+  if (handleReferenceElements(tag, node, parent)) {
+    return;
+  }
   if (tag in theme) {
     applyStyle(node, tag);
   }
+}
+
+function hasClass(node: Element, className: string): boolean {
+  const classes = (node.properties?.className as string[]) ?? [];
+  return classes.includes(className);
+}
+
+function handleReferenceElements(
+  tag: string,
+  node: Element,
+  parent: Element | undefined
+): boolean {
+  if ((tag === "ol" || tag === "ul") && hasClass(node, "references-list")) {
+    applyStyle(node, "references-list");
+    return true;
+  }
+  if (tag === "p" && hasClass(node, "references-title")) {
+    applyStyle(node, "references-title");
+    return true;
+  }
+  if (tag === "sup" && hasClass(node, "reference-index")) {
+    applyStyle(node, "reference-index");
+    return true;
+  }
+  if (tag === "p" && parent?.tagName === "blockquote") {
+    // blockquote 内段落默认 margin-bottom 会让上下留白不对称
+    mergeStyle(node, {
+      "margin-top": "0",
+      "margin-bottom": "0",
+    });
+    return true;
+  }
+  return false;
 }
 
 function handleCode(node: Element, parent: Element | undefined) {
@@ -75,6 +111,10 @@ function handleSection(node: Element) {
   const classes = (node.properties?.className as string[]) ?? [];
   if (classes.includes("footnotes")) {
     mergeStyle(node, theme["footnotes-section"]);
+    return;
+  }
+  if (classes.includes("references-section")) {
+    mergeStyle(node, theme["references-section"]);
   }
 }
 
@@ -103,6 +143,10 @@ function handleListItem(node: Element) {
   const classes = (node.properties?.className as string[]) ?? [];
   if (classes.includes("task-list-item")) {
     applyStyle(node, "task-list-item");
+    return;
+  }
+  if (classes.includes("references-item")) {
+    applyStyle(node, "references-item");
     return;
   }
   applyStyle(node, "li");

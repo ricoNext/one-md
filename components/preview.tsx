@@ -26,7 +26,7 @@ export default function Preview({ html }: PreviewProps) {
     }
     // Shadow DOM 内部不继承外部样式，只有 inline style 生效
     shadowRef.current.innerHTML = `
-      <div style="box-sizing:border-box;width:100%;max-width:680px;min-width:0;margin:0 auto;padding:32px;font-family:-apple-system,'Helvetica Neue',Arial,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;color:#333333;line-height:1.75;font-size:15px;word-break:break-word;">
+      <div style="box-sizing:border-box;width:100%;max-width:680px;min-width:0;margin:0 auto;padding:32px;min-height:100vh;background-color:#ffffff;font-family:-apple-system,'Helvetica Neue',Arial,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;color:#333333;line-height:1.75;font-size:15px;word-break:break-word;">
         ${html}
       </div>
     `;

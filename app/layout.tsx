@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MD to WeChat",
+  title: "One MD",
   description: "Markdown 渲染器，支持一键复制到微信公众号",
 };
 

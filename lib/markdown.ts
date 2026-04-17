@@ -95,6 +95,15 @@ const CODE_BG = "#282c34";
 
 const CODE_DEFAULT_COLOR = "#abb2bf";
 
+const REFERENCE_SECTION_CLASS = "references-section";
+const REFERENCE_TITLE_CLASS = "references-title";
+const REFERENCE_LIST_CLASS = "references-list";
+const REFERENCE_ITEM_CLASS = "references-item";
+const REFERENCE_INDEX_CLASS = "reference-index";
+const WWW_PREFIX_RE = /^www\./;
+const MULTI_SPACE_RE = /\s+/g;
+const DEFAULT_INTERNAL_HOSTS = ["one-md.vercel.app", "localhost", "127.0.0.1"];
+
 /**
  * 将 token 转为 <span style="color:..."> 或裸文本。
  *
@@ -243,6 +252,150 @@ function rehypeShiki(hl: Highlighter): Plugin<[], Root> {
   };
 }
 
+interface ExternalReference {
+  href: string;
+  label: string;
+}
+
+function normalizeHost(value: string): string {
+  return value.trim().toLowerCase().replace(WWW_PREFIX_RE, "");
+}
+
+function getSiteHosts(): Set<string> {
+  const hosts = new Set<string>();
+  for (const host of DEFAULT_INTERNAL_HOSTS) {
+    hosts.add(normalizeHost(host));
+  }
+  const envUrls = [
+    process.env.NEXT_PUBLIC_SITE_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.NEXT_PUBLIC_VERCEL_URL,
+    process.env.VERCEL_URL,
+  ].filter(Boolean) as string[];
+
+  for (const raw of envUrls) {
+    try {
+      const input = raw.startsWith("http") ? raw : `https://${raw}`;
+      const hostname = new URL(input).hostname;
+      hosts.add(normalizeHost(hostname));
+    } catch {
+      // ignore invalid env value
+    }
+  }
+
+  if (typeof window !== "undefined" && window.location.hostname) {
+    hosts.add(normalizeHost(window.location.hostname));
+  }
+
+  return hosts;
+}
+
+function getNodeText(node: Element): string {
+  let text = "";
+  visit(node, "text", (textNode) => {
+    text += String(textNode.value ?? "");
+  });
+  return text.replace(MULTI_SPACE_RE, " ").trim();
+}
+
+function isExternalHttpLink(href: string, siteHosts: Set<string>): boolean {
+  try {
+    const parsed = new URL(href);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return false;
+    }
+    return !siteHosts.has(normalizeHost(parsed.hostname));
+  } catch {
+    return false;
+  }
+}
+
+function createReferenceSection(references: ExternalReference[]): Element {
+  const listItems: Element[] = references.map((ref, index) => ({
+    type: "element",
+    tagName: "li",
+    properties: { className: [REFERENCE_ITEM_CLASS] },
+    children: [
+      {
+        type: "text",
+        value: `[${index + 1}] ${ref.label} - `,
+      },
+      {
+        type: "element",
+        tagName: "a",
+        properties: { href: ref.href },
+        children: [{ type: "text", value: ref.href }],
+      },
+    ],
+  }));
+
+  return {
+    type: "element",
+    tagName: "section",
+    properties: { className: [REFERENCE_SECTION_CLASS] },
+    children: [
+      {
+        type: "element",
+        tagName: "p",
+        properties: { className: [REFERENCE_TITLE_CLASS] },
+        children: [{ type: "text", value: "参考链接" }],
+      },
+      {
+        type: "element",
+        tagName: "ul",
+        properties: { className: [REFERENCE_LIST_CLASS] },
+        children: listItems,
+      },
+    ],
+  };
+}
+
+const rehypeExternalRefs: Plugin<[], Root> = () => (tree) => {
+  const siteHosts = getSiteHosts();
+  const seen = new Set<string>();
+  const references: ExternalReference[] = [];
+  const referenceIndexByHref = new Map<string, number>();
+
+  visit(tree, "element", (node: Element) => {
+    if (node.tagName !== "a") {
+      return;
+    }
+
+    const href = String(node.properties?.href ?? "").trim();
+    if (!(href && isExternalHttpLink(href, siteHosts)) || seen.has(href)) {
+      return;
+    }
+
+    seen.add(href);
+    const label = getNodeText(node) || href;
+    references.push({ href, label });
+    referenceIndexByHref.set(href, references.length);
+  });
+
+  if (references.length === 0) {
+    return;
+  }
+
+  visit(tree, "element", (node: Element) => {
+    if (node.tagName !== "a") {
+      return;
+    }
+    const href = String(node.properties?.href ?? "").trim();
+    const index = referenceIndexByHref.get(href);
+    if (!index) {
+      return;
+    }
+    node.children.push({
+      type: "element",
+      tagName: "sup",
+      properties: { className: [REFERENCE_INDEX_CLASS] },
+      children: [{ type: "text", value: `[${index}]` }],
+    } as never);
+  });
+
+  tree.children.push(createReferenceSection(references) as never);
+};
+
 // ── 主渲染函数 ───────────────────────────────────────────────
 export async function renderMarkdown(markdown: string): Promise<string> {
   const hl = await getHighlighter();
@@ -252,6 +405,7 @@ export async function renderMarkdown(markdown: string): Promise<string> {
     .use(remarkGfm)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
+    .use(rehypeExternalRefs)
     .use(rehypeShiki(hl))
     .use(rehypeWeChatCompat)
     .use(rehypeInlineStyle)

@@ -36,9 +36,7 @@ export default function Toolbar({ html }: ToolbarProps) {
   return (
     <header className="flex items-center justify-between border-gray-200 border-b bg-white px-6 py-3">
       <div className="flex items-center gap-2">
-        <span className="font-semibold text-base text-gray-800">
-          MD to WeChat
-        </span>
+        <span className="font-semibold text-base text-gray-800">One MD</span>
         <span className="rounded bg-gray-100 px-2 py-0.5 text-gray-500 text-xs">
           Markdown 渲染器
         </span>

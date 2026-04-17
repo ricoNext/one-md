@@ -284,6 +284,46 @@ export const theme: Record<string, StyleMap> = {
     color: BASE_COLOR,
     "font-family": FONT_FAMILY,
   },
+  "references-section": {
+    "border-top": `1px solid ${BORDER_COLOR}`,
+    "margin-top": "32px",
+    "padding-top": "16px",
+    "margin-bottom": "16px",
+    "font-family": FONT_FAMILY,
+  },
+  "references-title": {
+    "font-size": "16px",
+    "font-weight": "bold",
+    "line-height": "1.5",
+    color: "#1a1a1a",
+    "margin-top": "0",
+    "margin-bottom": "8px",
+    "font-family": FONT_FAMILY,
+  },
+  "references-list": {
+    "padding-left": "0",
+    "margin-top": "0",
+    "margin-bottom": "0",
+    "list-style-type": "none",
+    color: BASE_COLOR,
+    "font-family": FONT_FAMILY,
+  },
+  "references-item": {
+    "font-size": "14px",
+    "line-height": "1.75",
+    "margin-bottom": "4px",
+    color: BASE_COLOR,
+    "font-family": FONT_FAMILY,
+    "word-break": "break-word",
+  },
+  "reference-index": {
+    color: LINK_COLOR,
+    "font-size": "12px",
+    "line-height": "1",
+    "vertical-align": "super",
+    "text-decoration": "none",
+    "margin-left": "2px",
+  },
 };
 
 /** 将 StyleMap 对象转为 inline style 字符串 */
