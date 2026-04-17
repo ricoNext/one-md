@@ -102,6 +102,8 @@ const REFERENCE_ITEM_CLASS = "references-item";
 const REFERENCE_INDEX_CLASS = "reference-index";
 const WWW_PREFIX_RE = /^www\./;
 const MULTI_SPACE_RE = /\s+/g;
+const TRAILING_SLASH_RE = /\/+$/;
+const HTTP_PROTOCOL_RE = /^https?:\/\//i;
 const DEFAULT_INTERNAL_HOSTS = ["one-md.vercel.app", "localhost", "127.0.0.1"];
 
 /**
@@ -310,6 +312,18 @@ function isExternalHttpLink(href: string, siteHosts: Set<string>): boolean {
   }
 }
 
+function normalizeUrlText(value: string): string {
+  return value.trim().replace(TRAILING_SLASH_RE, "").toLowerCase();
+}
+
+function isBareUrlLabel(label: string, href: string): boolean {
+  const labelText = label.trim();
+  if (!HTTP_PROTOCOL_RE.test(labelText)) {
+    return false;
+  }
+  return normalizeUrlText(labelText) === normalizeUrlText(href);
+}
+
 function createReferenceSection(references: ExternalReference[]): Element {
   const listItems: Element[] = references.map((ref, index) => ({
     type: "element",
@@ -366,8 +380,12 @@ const rehypeExternalRefs: Plugin<[], Root> = () => (tree) => {
       return;
     }
 
-    seen.add(href);
     const label = getNodeText(node) || href;
+    if (isBareUrlLabel(label, href)) {
+      return;
+    }
+
+    seen.add(href);
     references.push({ href, label });
     referenceIndexByHref.set(href, references.length);
   });
