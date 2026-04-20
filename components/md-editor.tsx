@@ -95,6 +95,7 @@ function getInitialContent(): string {
 export default function MdEditor() {
   const [markdown, setMarkdown] = useState(getInitialContent);
   const [html, setHtml] = useState("");
+  const [scrollProgress, setScrollProgress] = useState(0);
   const renderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -128,14 +129,18 @@ export default function MdEditor() {
       <Toolbar html={html} />
       <div className="flex flex-1 overflow-hidden">
         <div className="w-1/2">
-          <Editor onChange={setMarkdown} value={markdown} />
+          <Editor
+            onChange={setMarkdown}
+            onScrollProgress={setScrollProgress}
+            value={markdown}
+          />
         </div>
         <div className="flex w-1/2 min-w-0 flex-col">
           <div className="border-gray-100 border-b bg-gray-50 px-4 py-2">
             <span className="font-medium text-gray-500 text-xs">预览</span>
           </div>
-          <div className="min-w-0 flex-1 overflow-auto">
-            <Preview html={html} />
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <Preview html={html} scrollProgress={scrollProgress} />
           </div>
         </div>
       </div>
