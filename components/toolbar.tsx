@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import UserMenu from "@/components/user-menu";
 import { copyHtmlToClipboard } from "@/lib/clipboard";
 
 interface ToolbarProps {
@@ -41,14 +42,17 @@ export default function Toolbar({ html }: ToolbarProps) {
           Markdown 渲染器
         </span>
       </div>
-      <button
-        className={`rounded-md px-4 py-2 font-medium text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${buttonClass}`}
-        disabled={status !== "idle" || !html}
-        onClick={handleCopy}
-        type="button"
-      >
-        {buttonLabel}
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          className={`rounded-md px-4 py-2 font-medium text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${buttonClass}`}
+          disabled={status !== "idle" || !html}
+          onClick={handleCopy}
+          type="button"
+        >
+          {buttonLabel}
+        </button>
+        <UserMenu />
+      </div>
     </header>
   );
 }

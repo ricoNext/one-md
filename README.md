@@ -1,5 +1,67 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Database Setup (Prisma + PostgreSQL)
+
+1. Create local env file:
+
+```bash
+cp .env.example .env.local
+```
+
+2. Set your Aliyun PostgreSQL connection string in `.env.local`:
+
+```bash
+DATABASE_URL="postgresql://USERNAME:PASSWORD@YOUR_ALIYUN_HOST:5432/DATABASE_NAME?schema=public&sslmode=disable"
+```
+
+3. Generate Prisma Client:
+
+```bash
+bunx prisma generate
+```
+
+4. Sync schema from an existing database (keep all current data):
+
+```bash
+cp .env.local .env
+bunx prisma db pull
+```
+
+5. Generate Prisma Client:
+
+```bash
+bunx prisma generate
+```
+
+6. Verify connection after starting dev server:
+
+```bash
+curl http://localhost:3000/api/health/db
+```
+
+## Authentication Setup (OAuth)
+
+1. Add auth env vars in `.env`（至少配置 GitHub 或 Google 其一）：
+
+```bash
+AUTH_SECRET="replace-with-a-random-long-secret"
+AUTH_GITHUB_ID="..."
+AUTH_GITHUB_SECRET="..."
+AUTH_GOOGLE_ID="..."
+AUTH_GOOGLE_SECRET="..."
+```
+
+- GitHub：`http://localhost:3000/api/auth/callback/github`
+- Google：`http://localhost:3000/api/auth/callback/google`
+
+2. Push auth tables to the current database (without resetting existing data):
+
+```bash
+bunx prisma db push
+```
+
+3. Open `/login` and sign in with GitHub or Google.
+
 ## Getting Started
 
 First, run the development server:
